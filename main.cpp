@@ -20,7 +20,9 @@ int main(int argc , char **argv){
 //	namedWindow("Window");
 //	drawKeyPoints(image,keypoints);
 //	waitKey(0);
-	openCamera(1);
+//	openCamera(1);
+	if(buildVocabulary("./"))
+		cout << "Success";
 	return 0;
 }
 

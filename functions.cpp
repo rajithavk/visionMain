@@ -7,7 +7,18 @@
 
 #include "functions.hpp"
 
-int createVocabulary(Mat image){
+int buildVocabulary(char *filepath){
+	DIR *dir;
+	struct dirent *entry;
+	struct stat filestat;
+	dir = opendir(filepath);
+	if(!dir) return -1;
+
+	while((entry = readdir(dir))){
+		cout << entry->d_name << " " << entry->d_type << endl;
+	}
+
+	return closedir(dir);
 	return 0;
 }
 
@@ -38,7 +49,7 @@ void showImage(Mat image){
 	//waitKey(0);
 }
 
-void openCamera(int index=0){
+void openCamera(int index=0){	// index - video device - 0,1,2... == video0, video1
 	Mat frame;
 	char key;
 	namedWindow("Camera");
