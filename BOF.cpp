@@ -22,7 +22,7 @@ int main(int argc , char **argv){
 //	drawKeyPoints(image,keypoints);
 //	waitKey(0);
 //	openCamera(1);
-	if(buildVocabulary())
+	if(buildVocabulary("images"))
 		cout << "Success";
 	return 0;
 }

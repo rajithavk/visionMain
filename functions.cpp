@@ -7,20 +7,33 @@
 
 #include "functions.hpp"
 
-int buildVocabulary(){
+int buildVocabulary(String  filepath){
 	DIR *dir,*subdir;
+	char CWD[2049],ROOT[2049];
 	Mat input , descriptor, featuresUnclustered , vocabulary;
 	vector<KeyPoint> keypoints;
-	char CWD[2049];
 	struct dirent *entry,*imagefile;
 	struct stat filestat;
-	dir = opendir("training");
+
+	if(getcwd(ROOT,2049) == NULL) return -1;
+
+
+	dir = opendir(filepath.c_str());
 	if(!dir) return -1;
 
 
+	if(chdir(filepath.c_str()) < 0){
+		cout << "Error in CHDIR" << endl;
+		return -1;
+	}
+
+	if(getcwd(CWD,2049) == NULL) return -1;
+
+	cout << CWD << endl;
+
 
 	while((entry = readdir(dir))){
-		cout << entry->d_name << endl;
+		//cout << entry->d_name << endl;
 		if(stat(entry->d_name, &filestat) <0){
 			cout << "Error\n";
 			continue;
@@ -30,7 +43,7 @@ int buildVocabulary(){
 		if(!strcmp(entry->d_name,".."))	continue;
 
 		if(S_ISDIR(filestat.st_mode)){
-			cout << "\n" << entry->d_name;
+			cout << "\n" << entry->d_name<<endl;
 			subdir = opendir(entry->d_name);
 			if(!subdir){
 				cout << "Err";
@@ -40,23 +53,29 @@ int buildVocabulary(){
 				if(!strcmp(imagefile->d_name,"."))	continue;
 				if(!strcmp(imagefile->d_name,".."))	continue;
 
-				input = imread(imagefile->d_name,CV_LOAD_IMAGE_GRAYSCALE);
+				String impath = String(CWD) + "/" + String(entry->d_name) + "/" +  imagefile->d_name;
+				cout << impath << endl;
+
+				input = imread(impath.c_str(),CV_LOAD_IMAGE_GRAYSCALE);
 				keypoints = calcKeyPoints(input);
 				descriptor = getDescriptors(input,keypoints);
 				featuresUnclustered.push_back(descriptor);
-				cout << imagefile->d_name << " ";
+				//cout << imagefile->d_name << " ";
 			}
 			closedir(subdir);
 		}
 
 	}
 
-	return closedir(dir);
+	closedir(dir);
+
+	if(chdir(ROOT) < 0) return -1;
 
 	cout << "Total Descriptors : " << featuresUnclustered.rows << endl;
 	FileStorage fs("training_descriptors.yml",FileStorage::WRITE);
 	fs << "training_descriptors" << featuresUnclustered;
 	fs.release();
+	cout << "Training Descriptors => " << ROOT << "\training_descriptors.yml" << endl;
 
 	BOWKMeansTrainer bowtrainer(1000);
 	bowtrainer.add(featuresUnclustered);
@@ -66,6 +85,7 @@ int buildVocabulary(){
 	FileStorage fs1("vocabulary.yml",FileStorage::WRITE);
 	fs1 << "Vocabulary" << vocabulary;
 	fs1.release();
+	cout << "Vocabulary => " << ROOT << "\vocabulary.yml" << endl;
 	return 0;
 }
 
