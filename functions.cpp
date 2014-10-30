@@ -12,8 +12,11 @@ int buildVocabulary(String  filepath){
 	char CWD[2049],ROOT[2049];
 	Mat input , descriptor, featuresUnclustered , vocabulary;
 	vector<KeyPoint> keypoints;
+	ofstream trainingdata;
 	struct dirent *entry,*imagefile;
 	struct stat filestat;
+
+	trainingdata.open("trainingdata.dat",ofstream::out | ofstream::app);
 
 	if(getcwd(ROOT,2049) == NULL) return -1;
 
@@ -60,6 +63,7 @@ int buildVocabulary(String  filepath){
 				keypoints = calcKeyPoints(input);
 				descriptor = getDescriptors(input,keypoints);
 				featuresUnclustered.push_back(descriptor);
+				trainingdata << impath << " " << entry->d_name << endl;
 				//cout << imagefile->d_name << " ";
 			}
 			closedir(subdir);
@@ -68,7 +72,7 @@ int buildVocabulary(String  filepath){
 	}
 
 	closedir(dir);
-
+	trainingdata.close();
 	if(chdir(ROOT) < 0) return -1;
 
 	cout << "Total Descriptors : " << featuresUnclustered.rows << endl;
