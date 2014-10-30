@@ -27,12 +27,14 @@
 using namespace std;
 using namespace cv;
 
-int buildVocabulary(String filepath);
-
-Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);
-vector<KeyPoint> calcKeyPoints(Mat image);
 
 void drawKeyPoints(Mat image, vector<KeyPoint> keypoints);
 void showImage(Mat image);
+
+vector<KeyPoint> calcKeyPoints(Mat image);
+Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);
+
+int buildVocabulary(String filepath);
+int trainSVM();
 
 void openCamera(int index);

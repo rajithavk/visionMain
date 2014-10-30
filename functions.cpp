@@ -16,7 +16,7 @@ int buildVocabulary(String  filepath){
 	struct dirent *entry,*imagefile;
 	struct stat filestat;
 
-	trainingdata.open("trainingdata.dat",ofstream::out | ofstream::app);
+	trainingdata.open("trainingdata.dat",ofstream::out);
 
 	if(getcwd(ROOT,2049) == NULL) return -1;
 
@@ -92,6 +92,40 @@ int buildVocabulary(String  filepath){
 	cout << "Vocabulary => " << ROOT << "/vocabulary.yml" << endl;
 	return 0;
 }
+
+
+
+
+int trainSVM(){
+	Mat vocabulary;
+	FileStorage fs("vocabulary.yml",FileStorage::READ);
+	fs["Vocabulary"] >> vocabulary;
+	fs.release();
+
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
+	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);
+	BOWImgDescriptorExtractor bowde(extractor,matcher);
+	bowde.setVocabulary(vocabulary);
+
+	map<string,Mat> classes_training_data;
+	classes_training_data.clear();
+	ifstream ifs("trainingdata.dat");
+	int total_samples;
+	String filepath,_class;
+
+	do{
+		ifs >> filepath >> _class;
+		cout << filepath << " " << _class << endl;
+		total_samples++;
+	}while(!ifs.eof());
+
+	return 0;
+}
+
+
+
+
+
 
 
 Mat getDescriptors(Mat image,vector<KeyPoint> keypoints){
