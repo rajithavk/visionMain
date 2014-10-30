@@ -11,6 +11,7 @@ Mat image;
 vector<KeyPoint> keypoints;
 Mat descriptors;
 
+
 int main(int argc , char **argv){
 //	cout << argv[1] << endl;
 //	image = imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE);
@@ -21,7 +22,7 @@ int main(int argc , char **argv){
 //	drawKeyPoints(image,keypoints);
 //	waitKey(0);
 //	openCamera(1);
-	if(buildVocabulary("./"))
+	if(buildVocabulary())
 		cout << "Success";
 	return 0;
 }

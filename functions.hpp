@@ -27,7 +27,7 @@
 using namespace std;
 using namespace cv;
 
-int buildVocabulary(char *filepath);
+int buildVocabulary();
 
 Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);
 vector<KeyPoint> calcKeyPoints(Mat image);

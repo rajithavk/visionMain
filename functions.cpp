@@ -7,18 +7,65 @@
 
 #include "functions.hpp"
 
-int buildVocabulary(char *filepath){
-	DIR *dir;
-	struct dirent *entry;
+int buildVocabulary(){
+	DIR *dir,*subdir;
+	Mat input , descriptor, featuresUnclustered , vocabulary;
+	vector<KeyPoint> keypoints;
+	char CWD[2049];
+	struct dirent *entry,*imagefile;
 	struct stat filestat;
-	dir = opendir(filepath);
+	dir = opendir("training");
 	if(!dir) return -1;
 
+
+
 	while((entry = readdir(dir))){
-		cout << entry->d_name << " " << entry->d_type << endl;
+		cout << entry->d_name << endl;
+		if(stat(entry->d_name, &filestat) <0){
+			cout << "Error\n";
+			continue;
+		}
+
+		if(!strcmp(entry->d_name,"."))	continue;
+		if(!strcmp(entry->d_name,".."))	continue;
+
+		if(S_ISDIR(filestat.st_mode)){
+			cout << "\n" << entry->d_name;
+			subdir = opendir(entry->d_name);
+			if(!subdir){
+				cout << "Err";
+				return -1;
+			}
+			while((imagefile = readdir(subdir))){
+				if(!strcmp(imagefile->d_name,"."))	continue;
+				if(!strcmp(imagefile->d_name,".."))	continue;
+
+				input = imread(imagefile->d_name,CV_LOAD_IMAGE_GRAYSCALE);
+				keypoints = calcKeyPoints(input);
+				descriptor = getDescriptors(input,keypoints);
+				featuresUnclustered.push_back(descriptor);
+				cout << imagefile->d_name << " ";
+			}
+			closedir(subdir);
+		}
+
 	}
 
 	return closedir(dir);
+
+	cout << "Total Descriptors : " << featuresUnclustered.rows << endl;
+	FileStorage fs("training_descriptors.yml",FileStorage::WRITE);
+	fs << "training_descriptors" << featuresUnclustered;
+	fs.release();
+
+	BOWKMeansTrainer bowtrainer(1000);
+	bowtrainer.add(featuresUnclustered);
+	cout << "Cluster BOW Features" << endl;
+	vocabulary = bowtrainer.cluster();
+
+	FileStorage fs1("vocabulary.yml",FileStorage::WRITE);
+	fs1 << "Vocabulary" << vocabulary;
+	fs1.release();
 	return 0;
 }
 
