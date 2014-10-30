@@ -79,7 +79,7 @@ int buildVocabulary(String  filepath){
 	FileStorage fs("training_descriptors.yml",FileStorage::WRITE);
 	fs << "training_descriptors" << featuresUnclustered;
 	fs.release();
-	cout << "Training Descriptors => " << ROOT << "\training_descriptors.yml" << endl;
+	cout << "Training Descriptors => " << ROOT << "/training_descriptors.yml" << endl;
 
 	BOWKMeansTrainer bowtrainer(1000);
 	bowtrainer.add(featuresUnclustered);
@@ -89,7 +89,7 @@ int buildVocabulary(String  filepath){
 	FileStorage fs1("vocabulary.yml",FileStorage::WRITE);
 	fs1 << "Vocabulary" << vocabulary;
 	fs1.release();
-	cout << "Vocabulary => " << ROOT << "\vocabulary.yml" << endl;
+	cout << "Vocabulary => " << ROOT << "/vocabulary.yml" << endl;
 	return 0;
 }
 
