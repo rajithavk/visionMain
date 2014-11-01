@@ -97,7 +97,8 @@ int buildVocabulary(String  filepath){
 
 
 int trainSVM(){
-	Mat vocabulary;
+	Mat vocabulary, hist, image;
+	vector<KeyPoint> keypoints;
 	FileStorage fs("vocabulary.yml",FileStorage::READ);
 	fs["Vocabulary"] >> vocabulary;
 	fs.release();
@@ -116,8 +117,22 @@ int trainSVM(){
 	do{
 		ifs >> filepath >> _class;
 		cout << filepath << " " << _class << endl;
+		image = imread(filepath,CV_LOAD_IMAGE_GRAYSCALE);
+		bowde.compute(image,keypoints,hist);
+
+		if(classes_training_data.count(_class) == 0){
+			classes_training_data[_class].create(0,hist.cols,hist.type());
+		}
+
+		classes_training_data[_class].push_back(hist);
+
 		total_samples++;
 	}while(!ifs.eof());
+
+	map<string,CvSVM> classes_classifiers;
+	for(map<string,Mat>::iterator it = classes_training_data.begin();it != classes_training_data.end();it++){
+
+	}
 
 	return 0;
 }
