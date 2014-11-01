@@ -149,6 +149,13 @@ int trainSVM(){
 	fs1.release();
 
 	map<string,CvSVM> classes_classifiers;
+	CvSVMParams svmparams;
+	svmparams.svm_type	=	CvSVM::ONE_CLASS;
+	svmparams.kernel_type	= CvSVM::LINEAR;
+	svmparams.nu = 0.5;
+
+
+
 	for(map<string,Mat>::iterator it = classes_training_data.begin();it != classes_training_data.end();it++){
 		string class_ = (*it).first;
 		cout << "training.class : " << class_ << " .. " << endl;
@@ -156,10 +163,21 @@ int trainSVM(){
 		Mat samples(0,hist.cols,hist.type());
 		Mat labels(0,1,CV_32FC1);
 		samples.push_back(classes_training_data[class_]);
-		cout << samples.cols << " " << samples.rows << endl;
 
 		Mat class_label = Mat::ones(classes_training_data[class_].rows,1,CV_32FC1);
-		labels.push_back(classes_training_data[ck])
+		labels.push_back(class_label);
+
+
+		for(map<string,Mat>::iterator it1 = classes_training_data.begin();it1!=classes_training_data.end();++it1){
+			string not_class = (*it1).first;
+			if(not_class[0] == class_[0]) continue;
+			samples.push_back(classes_training_data[not_class]);
+			class_label = Mat::zeros(classes_training_data[not_class].rows,1,CV_32FC1);
+			labels.push_back(class_label);
+		}
+		//cout << "going to train" << endl;
+		Mat samples_32f; samples.convertTo(samples_32f,CV_32F);
+		classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
 	}
 
 
