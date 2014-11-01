@@ -24,9 +24,14 @@ int main(int argc , char **argv){
 //	openCamera(1);
 //	if(buildVocabulary("images")==0)
 //		cout << "Success";
+	if(*argv[1] == '1'){
+		if(buildVocabulary("images")==0)
+		cout << "Success Vocabulary";
 
-	if(trainSVM()==0){
-		cout << "Success";
 	}
+	else
+		if(trainSVM()==0){
+			cout << "Success SVM";
+		}
 	return 0;
 }

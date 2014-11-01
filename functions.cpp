@@ -11,13 +11,14 @@ int buildVocabulary(String  filepath){
 	DIR *dir,*subdir;
 	char CWD[2049],ROOT[2049];
 	Mat input , descriptor, featuresUnclustered , vocabulary;
+	int count = 0;
 	vector<KeyPoint> keypoints;
 	ofstream trainingdata;
 	struct dirent *entry,*imagefile;
 	struct stat filestat;
 
 	trainingdata.open("trainingdata.dat",ofstream::out);
-
+	FileStorage fs2("keypoints.yml",FileStorage::WRITE);
 	if(getcwd(ROOT,2049) == NULL) return -1;
 
 
@@ -61,6 +62,11 @@ int buildVocabulary(String  filepath){
 
 				input = imread(impath.c_str(),CV_LOAD_IMAGE_GRAYSCALE);
 				keypoints = calcKeyPoints(input);
+				char key[20];
+				sprintf(key,"_%d",count);
+				write(fs2,key,keypoints);
+				count++;
+
 				descriptor = getDescriptors(input,keypoints);
 				featuresUnclustered.push_back(descriptor);
 				trainingdata << impath << " " << entry->d_name << endl;
@@ -73,6 +79,7 @@ int buildVocabulary(String  filepath){
 
 	closedir(dir);
 	trainingdata.close();
+
 	if(chdir(ROOT) < 0) return -1;
 
 	cout << "Total Descriptors : " << featuresUnclustered.rows << endl;
@@ -90,6 +97,7 @@ int buildVocabulary(String  filepath){
 	fs1 << "Vocabulary" << vocabulary;
 	fs1.release();
 	cout << "Vocabulary => " << ROOT << "/vocabulary.yml" << endl;
+	fs2.release();
 	return 0;
 }
 
@@ -103,6 +111,7 @@ int trainSVM(){
 	fs["Vocabulary"] >> vocabulary;
 	fs.release();
 
+
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
 	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);
 	BOWImgDescriptorExtractor bowde(extractor,matcher);
@@ -111,13 +120,20 @@ int trainSVM(){
 	map<string,Mat> classes_training_data;
 	classes_training_data.clear();
 	ifstream ifs("trainingdata.dat");
-	int total_samples;
+	int total_samples=0;
+	FileStorage fs1("keypoints.yml",FileStorage::READ);
+	FileNode keypointnode;
 	String filepath,_class;
 
 	do{
 		ifs >> filepath >> _class;
 		cout << filepath << " " << _class << endl;
 		image = imread(filepath,CV_LOAD_IMAGE_GRAYSCALE);
+
+		char key[20];
+		sprintf(key,"_%d",total_samples);
+		keypointnode = fs1[key];
+		read(keypointnode,keypoints);
 		bowde.compute(image,keypoints,hist);
 
 		if(classes_training_data.count(_class) == 0){
@@ -129,10 +145,23 @@ int trainSVM(){
 		total_samples++;
 	}while(!ifs.eof());
 
+	ifs.close();
+	fs1.release();
+
 	map<string,CvSVM> classes_classifiers;
 	for(map<string,Mat>::iterator it = classes_training_data.begin();it != classes_training_data.end();it++){
+		string class_ = (*it).first;
+		cout << "training.class : " << class_ << " .. " << endl;
 
+		Mat samples(0,hist.cols,hist.type());
+		Mat labels(0,1,CV_32FC1);
+		samples.push_back(classes_training_data[class_]);
+		cout << samples.cols << " " << samples.rows << endl;
+
+		Mat class_label = Mat::ones(classes_training_data[class_].rows,1,CV_32FC1);
+		labels.push_back(classes_training_data[ck])
 	}
+
 
 	return 0;
 }
