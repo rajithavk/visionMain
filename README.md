@@ -4,17 +4,22 @@ visionMain
 Functions and modules related to vision
 
 ./Default
-|------> ./make 	-	Build Project
+		|------> ./make 	-	Build Project
 
-|------> ./make clean	-	Clean Builds
+		|------> ./make clean	-	Clean Builds
 
 
 Directory Structure
 ===================
 
-images/class1/*.jpg
-images/class2/*.jpg
-.
-.
-.
-images/classn/*.jpg
+images/
+		class1/*.jpg
+
+		class2/*.jpg
+
+		.
+		.
+		.
+
+		classn/*.jpg
+
