@@ -24,13 +24,15 @@ int main(int argc , char **argv){
 //	openCamera(1);
 //	if(buildVocabulary("images")==0)
 //		cout << "Success";
+	vision* dev = new vision();
+
 	if(*argv[1] == '1'){
-		if(buildVocabulary("images")==0)
+		if(dev->buildVocabulary("images")==0)
 		cout << "Success Vocabulary";
 
 	}
 	else
-		if(trainSVM()==0){
+		if(dev->trainSVM()==0){
 			cout << "Success SVM";
 		}
 	return 0;

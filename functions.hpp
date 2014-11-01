@@ -9,12 +9,14 @@
 #define FUNCTIONS_H_
 
 
-#endif /* FUNCTIONS_H_ */
+
 
 #include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/ml/ml.hpp>
+#include <opencv2/legacy/legacy.hpp>
 #include <iostream>
 
 #include <dirent.h>
@@ -28,14 +30,24 @@
 using namespace std;
 using namespace cv;
 
+class vision{
 
-void drawKeyPoints(Mat image, vector<KeyPoint> keypoints);
-void showImage(Mat image);
+private :
+		Mat vocabulary;
+		map<string,CvSVM> classes_classifiers;
+		vector < vector <KeyPoint> > keypointsvec;
 
-vector<KeyPoint> calcKeyPoints(Mat image);
-Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);
+public:
+		void drawKeyPoints(Mat image, vector<KeyPoint> keypoints);
+		void showImage(Mat image);
+		vector<KeyPoint> calcKeyPoints(Mat image);
+		Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);
+		int buildVocabulary(String filepath);
+		int trainSVM();
 
-int buildVocabulary(String filepath);
-int trainSVM();
+		void openCamera(int index);
 
-void openCamera(int index);
+		vision();
+		~vision();
+};
+#endif /* FUNCTIONS_H_ */

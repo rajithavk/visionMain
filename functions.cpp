@@ -7,7 +7,10 @@
 
 #include "functions.hpp"
 
-int buildVocabulary(String  filepath){
+vision::vision(){};
+vision::~vision(){};
+
+int vision::buildVocabulary(String  filepath){
 	DIR *dir,*subdir;
 	char CWD[2049],ROOT[2049];
 	Mat input , descriptor, featuresUnclustered , vocabulary;
@@ -104,15 +107,15 @@ int buildVocabulary(String  filepath){
 
 
 
-int trainSVM(){
-	Mat vocabulary, hist, image;
+int vision::trainSVM(){
+	Mat hist, image;									//vocabulary -> moved to private global
 	vector<KeyPoint> keypoints;
 	FileStorage fs("vocabulary.yml",FileStorage::READ);
 	fs["Vocabulary"] >> vocabulary;
 	fs.release();
 
 
-	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
+	Ptr<DescriptorMatcher> matcher(new BruteForceMatcher<L2<float> >);
 	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);
 	BOWImgDescriptorExtractor bowde(extractor,matcher);
 	bowde.setVocabulary(vocabulary);
@@ -134,6 +137,7 @@ int trainSVM(){
 		sprintf(key,"_%d",total_samples);
 		keypointnode = fs1[key];
 		read(keypointnode,keypoints);
+		keypointsvec.push_back(keypoints);								// --- Vector of All the keypoints vectors of samples ---
 		bowde.compute(image,keypoints,hist);
 
 		if(classes_training_data.count(_class) == 0){
@@ -148,11 +152,11 @@ int trainSVM(){
 	ifs.close();
 	fs1.release();
 
-	map<string,CvSVM> classes_classifiers;
-	CvSVMParams svmparams;
-	svmparams.svm_type	=	CvSVM::ONE_CLASS;
-	svmparams.kernel_type	= CvSVM::LINEAR;
-	svmparams.nu = 0.5;
+
+	//CvSVMParams svmparams;
+	//svmparams.svm_type	=	CvSVM::C_SVC;
+	//svmparams.kernel_type	= CvSVM::RBF;
+	//svmparams.nu = 0.5;
 
 
 
@@ -170,17 +174,28 @@ int trainSVM(){
 
 		for(map<string,Mat>::iterator it1 = classes_training_data.begin();it1!=classes_training_data.end();++it1){
 			string not_class = (*it1).first;
-			if(not_class[0] == class_[0]) continue;
+			if(not_class.compare(class_) == 0) continue;
 			samples.push_back(classes_training_data[not_class]);
 			class_label = Mat::zeros(classes_training_data[not_class].rows,1,CV_32FC1);
 			labels.push_back(class_label);
 		}
 		//cout << "going to train" << endl;
 		Mat samples_32f; samples.convertTo(samples_32f,CV_32F);
-		classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
+		//classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
+		classes_classifiers[class_].train(samples_32f,labels);
+		classes_classifiers[class_].save(String(class_+ ".xml").c_str());
+		cout << classes_classifiers.count(class_) << endl;
 	}
 
-
+	Mat testimage;
+	testimage = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+	keypoints = calcKeyPoints(testimage);
+	bowde.compute(testimage,keypoints,hist);
+	//cout << hist.cols << endl;
+	for(map<string,CvSVM>::iterator it=classes_classifiers.begin();it!=classes_classifiers.end();++it){
+		float res = (*it).second.predict(hist,true);
+		cout << "class: " << (*it).first << " --> " << res << endl;
+	}
 	return 0;
 }
 
@@ -190,33 +205,33 @@ int trainSVM(){
 
 
 
-Mat getDescriptors(Mat image,vector<KeyPoint> keypoints){
+Mat vision::getDescriptors(Mat image,vector<KeyPoint> keypoints){
 	Mat descriptors;																	// descriptors of the current image
 	SiftDescriptorExtractor descriptorExtractor;										// feature extractor
 	descriptorExtractor.compute(image,keypoints,descriptors);							// extract
 	return descriptors;																	// return the descriptors for the input image
 }
 
-vector<KeyPoint> calcKeyPoints(Mat image){
+vector<KeyPoint> vision::calcKeyPoints(Mat image){
 	vector<KeyPoint> keypoints;															// SIFT keypoints of the current image
 	SiftFeatureDetector featureDetector;												// feature Detector
 	featureDetector.detect(image,keypoints);
 	return keypoints;
 }
 
-void drawKeyPoints(Mat image, vector<KeyPoint> keypoints){
+void vision::drawKeyPoints(Mat image, vector<KeyPoint> keypoints){
 	Mat outimage;
 	drawKeypoints(image,keypoints,outimage,Scalar(255,0,0));
 	imshow("Keypoints",outimage);
 	//waitKey(0);
 }
 
-void showImage(Mat image){
+void vision::showImage(Mat image){
 	imshow("Image",image);
 	//waitKey(0);
 }
 
-void openCamera(int index=0){	// index - video device - 0,1,2... == video0, video1
+void vision::openCamera(int index=0){	// index - video device - 0,1,2... == video0, video1
 	Mat frame;
 	char key;
 	namedWindow("Camera");
