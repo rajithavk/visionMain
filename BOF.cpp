@@ -26,14 +26,16 @@ int main(int argc , char **argv){
 //		cout << "Success";
 	vision* dev = new vision();
 
-	if(*argv[1] == '1'){
-		if(dev->buildVocabulary("images")==0)
-		cout << "Success Vocabulary";
+	dev->loadTrainingSet();
 
-	}
-	else
-		if(dev->trainSVM()==0){
-			cout << "Success SVM";
-		}
+//	if(*argv[1] == '1'){
+//		if(dev->buildVocabulary("images")==0)
+//		cout << "Success Vocabulary";
+//
+//	}
+//	else
+//		if(dev->trainSVM()==0){
+//			cout << "Success SVM";
+//		}
 	return 0;
 }
