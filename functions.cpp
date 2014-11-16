@@ -71,8 +71,10 @@ int vision::buildVocabulary(){
 int vision::trainSVM(){
 	Mat hist, image;									//vocabulary -> moved to private global
 	vector<KeyPoint> keypoints;
+	if(initVocabulary()!=0) return -1;
 
 	if(keypoints_vector.size()==0){
+		cout << "Making Keypoints";
 		for(multimap<string,Mat>::iterator it = training_set.begin();it!=training_set.end();it++){
 
 						Mat input = (*it).second;
@@ -132,7 +134,7 @@ int vision::trainSVM(){
 		Mat samples_32f; samples.convertTo(samples_32f,CV_32F);
 		//classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
 		classes_classifiers[class_].train(samples_32f,labels);
-		classes_classifiers[class_].save(String("/classifiers/"+ class_+ ".yml").c_str());
+		classes_classifiers[class_].save(String("./classifiers/"+ class_+ ".yml").c_str());
 		cout << classes_classifiers.count(class_) << endl;
 	}
 
@@ -223,8 +225,8 @@ int vision::initVocabulary(String filename){
 int vision::loadTrainingSet(){
 	num_of_samples = 0;
 	string class_;
-	string trainig_path = current_path().string() + "/images/";
-	path dirr(trainig_path);
+	string training_path = current_path().string() + "/images/";
+	path dirr(training_path);
 
 	//cout << dirr << endl;
 	for(recursive_directory_iterator end, dir(dirr);dir!=end;dir++){
@@ -270,8 +272,17 @@ void vision::openCamera(int index=0){	// index - video device - 0,1,2... == vide
 }
 
 
-int vision::initClassiers(){
+int vision::initClassifiers(){
+	String cpath = current_path().string() + "/classifiers/";
+	path p(cpath);
+	classes_classifiers.clear();
 
+	for(recursive_directory_iterator end, file(p);file!=end;file++){
+		String class_ = path(*file).filename().string();
+		cout << "Loading.. " << class_ << endl;
+		class_ = class_.substr(0,class_.length()-4);
+		classes_classifiers[class_].load(path(*file).string().c_str());
+	}
 
 	return 0;
 }

@@ -39,7 +39,9 @@ int main(int argc , char **argv){
 				}else
 					if(input=='q'){
 						break;
-					}
+					}else
+						if(input=='t')
+							dev->initClassifiers();
 	}
 
 //		dev->initVocabulary();

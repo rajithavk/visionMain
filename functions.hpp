@@ -70,7 +70,7 @@ public:
 		int buildVocabulary();										// build the vocabulary
 		int trainSVM();												// train the SVMs
 		int testImage();											// testing an input image against SVMs
-		int initClassiers();										// load SVMs
+		int initClassifiers();										// load SVMs
 
 		void openCamera(int index);
 
