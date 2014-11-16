@@ -7,64 +7,61 @@
 
 #include "functions.hpp"
 
-vision::vision(){};
+vision::vision(){
+	create_directories("./classifiers");
+
+	bowTrainer = (new BOWKMeansTrainer(1000));
+	descriptorMatcher = (new BruteForceMatcher<L2<float> >);
+	//Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
+	descriptorExtractor = (new SiftDescriptorExtractor);
+
+	bowDescriptorExtractor = (new BOWImgDescriptorExtractor(descriptorExtractor,descriptorMatcher));
+
+};
 vision::~vision(){};
 
 
 
 int vision::buildVocabulary(){
 	Mat input , descriptor, features_unclustered;
-	int count = 0;
 	vector<KeyPoint> keypoints;
-	ofstream trainingdata;
-	struct dirent *entry,*imagefile;
-	struct stat filestat;
 
-	trainingdata.open(TRAINING_DATA_FILE.c_str(),ofstream::out);
-	FileStorage fs2(KEYPOINTS_FILE.c_str(),FileStorage::WRITE);
+	for(multimap<string,Mat>::iterator it = training_set.begin();it!=training_set.end();it++){
 
-
-
-	path = get
-
-				input = imread(impath.c_str(),CV_LOAD_IMAGE_GRAYSCALE);
+				input = (*it).second;
 				keypoints = getKeyPoints(input);
-				char key[20];
-				sprintf(key,"_%d",count);
-				write(fs2,key,keypoints);
-				count++;
-
+				keypoints_vector.push_back(keypoints);
 				descriptor = getDescriptors(input,keypoints);
-				featuresUnclustered.push_back(descriptor);
-				trainingdata << impath << " " << entry->d_name << endl;
+				features_unclustered.push_back(descriptor);
 				//cout << imagefile->d_name << " ";
-			}
-			closedir(subdir);
+
 		}
+	//==================== Saving All the Keypoints ==========================
+	//FileStorage fs2(KEYPOINTS_FILE.c_str(),FileStorage::WRITE);
+	//for(size_t i =1;i!=keypoints_vector.size();++i){
+	//	cout << String("KP" + i) << endl;
+	//	fs2 << String("KP" + i) << keypoints_vector[i+1];
+	//}
+	//fs2.release();
+	//========================================================================
 
-	}
-
-	closedir(dir);
-	trainingdata.close();
-
-	if(chdir(ROOT) < 0) return -1;
-
-	cout << "Total Descriptors : " << featuresUnclustered.rows << endl;
+	cout << "Total Descriptors : " << features_unclustered.rows << endl;
 	FileStorage fs(TRAINING_DESCRIPTORS_FILE.c_str(),FileStorage::WRITE);
-	fs << "training_descriptors" << featuresUnclustered;
+	fs << "training_descriptors" << features_unclustered;
 	fs.release();
-	cout << "Training Descriptors => " << ROOT << "/training_descriptors.yml" << endl;
+	cout << "Training Descriptors => " << "/training_descriptors.yml" << endl;
 
-	BOWKMeansTrainer bowtrainer(1000);
-	bowtrainer.add(featuresUnclustered);
+
+	bowTrainer->add(features_unclustered);
 	cout << "Cluster BOW Features" << endl;
-	vocabulary = bowtrainer.cluster();
+	vocabulary = bowTrainer->cluster();
+
 
 	FileStorage fs1(VOCABULARY_FILE.c_str(),FileStorage::WRITE);
 	fs1 << "Vocabulary" << vocabulary;
 	fs1.release();
-	cout << "Vocabulary => " << ROOT << "/vocabulary.yml" << endl;
-	fs2.release();
+	cout << "Vocabulary => " << "/vocabulary.yml" << endl;
+	//fs2.release();
 	return 0;
 }
 
@@ -74,49 +71,36 @@ int vision::buildVocabulary(){
 int vision::trainSVM(){
 	Mat hist, image;									//vocabulary -> moved to private global
 	vector<KeyPoint> keypoints;
-	FileStorage fs(VOCABULARY_FILE.c_str(),FileStorage::READ);
-	fs["Vocabulary"] >> vocabulary;
-	fs.release();
+
+	if(keypoints_vector.size()==0){
+		for(multimap<string,Mat>::iterator it = training_set.begin();it!=training_set.end();it++){
+
+						Mat input = (*it).second;
+						keypoints = getKeyPoints(input);
+						keypoints_vector.push_back(keypoints);
+				}
+	}
 
 
-	Ptr<DescriptorMatcher> matcher(new BruteForceMatcher<L2<float> >);
-	//Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
-	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);
-	BOWImgDescriptorExtractor bowde(extractor,matcher);
-	bowde.setVocabulary(vocabulary);
+	bowDescriptorExtractor->setVocabulary(vocabulary);
 
 	map<string,Mat> classes_training_data;
 	classes_training_data.clear();
-	ifstream ifs(TRAINING_DATA_FILE.c_str());
-	int total_samples=0;
-	FileStorage fs1(KEYPOINTS_FILE.c_str(),FileStorage::READ);
-	FileNode keypointnode;
-	String filepath,_class;
 
-	do{
-		ifs >> filepath >> _class;
-		cout << filepath << " " << _class << endl;
-		image = imread(filepath,CV_LOAD_IMAGE_GRAYSCALE);
+	vector < vector <KeyPoint> >::iterator itr = keypoints_vector.begin();
 
-		char key[20];
-		sprintf(key,"_%d",total_samples);
-		keypointnode = fs1[key];
-		read(keypointnode,keypoints);
-		keypoints_vector.push_back(keypoints);								// --- Vector of All the keypoints vectors of samples ---
-		bowde.compute(image,keypoints,hist);
+	for(multimap<string,Mat>::iterator it=training_set.begin();it!=training_set.end();it++){
 
+		bowDescriptorExtractor->compute((*it).second,(*itr),hist);
+
+		string _class = (*it).first;
 		if(classes_training_data.count(_class) == 0){
 			classes_training_data[_class].create(0,hist.cols,hist.type());
 		}
 
 		classes_training_data[_class].push_back(hist);
-
-		total_samples++;
-	}while(!ifs.eof());
-
-	ifs.close();
-	fs1.release();
-
+		itr++;
+	}
 
 	//CvSVMParams svmparams;
 	//svmparams.svm_type	=	CvSVM::C_SVC;
@@ -148,14 +132,15 @@ int vision::trainSVM(){
 		Mat samples_32f; samples.convertTo(samples_32f,CV_32F);
 		//classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
 		classes_classifiers[class_].train(samples_32f,labels);
-		classes_classifiers[class_].save(String(class_+ ".yml").c_str());
+		classes_classifiers[class_].save(String("/classifiers/"+ class_+ ".yml").c_str());
 		cout << classes_classifiers.count(class_) << endl;
 	}
 
 	Mat testimage;
 	testimage = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
 	keypoints = getKeyPoints(testimage);
-	bowde.compute(testimage,keypoints,hist);
+	bowDescriptorExtractor->compute(testimage,keypoints,hist);
+
 	//cout << hist.cols << endl;
 	for(map<string,CvSVM>::iterator it=classes_classifiers.begin();it!=classes_classifiers.end();++it){
 		float res = (*it).second.predict(hist,true);
@@ -164,7 +149,24 @@ int vision::trainSVM(){
 	return 0;
 }
 
+int vision::testImage(){
+	Mat testimage,hist;
 
+	if(initVocabulary()!=0) return -1;
+
+
+	testimage = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+	vector<KeyPoint> keypoints;
+	keypoints = getKeyPoints(testimage);
+	bowDescriptorExtractor->compute(testimage,keypoints,hist);
+
+	//cout << hist.cols << endl;
+	for(map<string,CvSVM>::iterator it=classes_classifiers.begin();it!=classes_classifiers.end();++it){
+		float res = (*it).second.predict(hist,true);
+		cout << "class: " << (*it).first << " --> " << res << endl;
+	}
+	return 0;
+}
 
 
 
@@ -179,7 +181,7 @@ Mat vision::getDescriptors(Mat image,vector<KeyPoint> keypoints){
 
 vector<KeyPoint> vision::getKeyPoints(Mat image){
 	vector<KeyPoint> keypoints;															// SIFT keypoints of the current image
-	featureDetector = (new SiftFeatureDetector());												// feature Detector
+	featureDetector = (new SiftFeatureDetector);												// feature Detector
 	featureDetector->detect(image,keypoints);
 	return keypoints;
 }
@@ -197,16 +199,33 @@ void vision::showImage(Mat image){
 }
 
 int  vision::initVocabulary(){
+		FileStorage fs(VOCABULARY_FILE.c_str(),FileStorage::READ);
+		fs["Vocabulary"] >> vocabulary;
+		fs.release();
+	if(vocabulary.size >0)
+		return 0;
+	else
+		return -1;
+}
 
+int vision::initVocabulary(String filename){
+		FileStorage fs(filename.c_str(),FileStorage::READ);
+		fs["Vocabulary"] >> vocabulary;
+		fs.release();
 
-	return 0;
+		if(vocabulary.size >0)
+			return 0;
+		else
+			return -1;
 }
 
 
 int vision::loadTrainingSet(){
+	num_of_samples = 0;
 	string class_;
 	string trainig_path = current_path().string() + "/images/";
 	path dirr(trainig_path);
+
 	//cout << dirr << endl;
 	for(recursive_directory_iterator end, dir(dirr);dir!=end;dir++){
 		if(dir.level()==0){
@@ -217,14 +236,19 @@ int vision::loadTrainingSet(){
 		else
 			if(dir.level()==1){
 				string filename = path(*dir).string();
-				//cout << filename << endl;
+				cout << filename << endl;
 				pair<string,Mat> tmp(class_,imread(filename,CV_LOAD_IMAGE_GRAYSCALE));
 				training_set.insert(tmp);
+				num_of_samples++;
 			}
 	}
-
+	FileStorage fs1("trainingsetinfo.yml",FileStorage::WRITE);
+	fs1 << "num_of_samples" << num_of_samples;
+	fs1 << "classes" << classes;
 	num_of_classes = classes.size();
 	cout << "Total Number of Classes : " << num_of_classes << endl;
+	fs1 << "num_of_classes" << num_of_classes;
+	fs1.release();
 	return 0;
 }
 
@@ -243,4 +267,11 @@ void vision::openCamera(int index=0){	// index - video device - 0,1,2... == vide
 		}
 	}
 	destroyWindow("Camera");
+}
+
+
+int vision::initClassiers(){
+
+
+	return 0;
 }

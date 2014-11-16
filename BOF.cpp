@@ -10,7 +10,7 @@
 Mat image;
 vector<KeyPoint> keypoints;
 Mat descriptors;
-
+char input;
 
 int main(int argc , char **argv){
 //	cout << argv[1] << endl;
@@ -26,7 +26,24 @@ int main(int argc , char **argv){
 //		cout << "Success";
 	vision* dev = new vision();
 
-	dev->loadTrainingSet();
+	while(1){
+		cin >> input;
+		if(input == '1'){
+			dev->loadTrainingSet();
+		}else
+			if(input == '2'){
+				dev->buildVocabulary();
+			}else
+				if(input=='3'){
+					dev->trainSVM();
+				}else
+					if(input=='q'){
+						break;
+					}
+	}
+
+//		dev->initVocabulary();
+//		dev->trainSVM();
 
 //	if(*argv[1] == '1'){
 //		if(dev->buildVocabulary("images")==0)

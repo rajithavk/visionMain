@@ -41,7 +41,7 @@ private :
 		Ptr<DescriptorExtractor> descriptorExtractor;
 		Ptr<BOWKMeansTrainer> bowTrainer;
 		Ptr<BOWImgDescriptorExtractor> bowDescriptorExtractor;
-		//Ptr<BruteForceMatcher> descriptorMatcher;
+		Ptr<DescriptorMatcher> descriptorMatcher;
 
 
 		Mat vocabulary;
@@ -50,6 +50,7 @@ private :
 		vector < vector <KeyPoint> > keypoints_vector;
 		vector <string> classes;
 		int num_of_classes;
+		int num_of_samples;
 
 		const String TRAINING_DATA_FILE = "training_data.dat";
 		const String KEYPOINTS_FILE = "keypoints.yml";
@@ -59,15 +60,17 @@ private :
 		const int CLUSTERS = 1000;
 
 public:
-		int loadTrainingSet();
-		int initVocabulary();
-
-		void drawKeyPoints(Mat image, vector<KeyPoint> keypoints);
-		void showImage(Mat image);
-		vector<KeyPoint> getKeyPoints(Mat image);
-		Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);
-		int buildVocabulary();
-		int trainSVM();
+		int loadTrainingSet();										// Load training images set into memory
+		int initVocabulary();										// Load default vocabulary from file
+		int initVocabulary(String filename);						// For loading custom vocabulary in case
+		void drawKeyPoints(Mat image, vector<KeyPoint> keypoints);	// Draw keypoints for given image + keypoints vector
+		void showImage(Mat image);									// Showing an image
+		vector<KeyPoint> getKeyPoints(Mat image);					// Get the keypoints vector for given image
+		Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);	// Get image descriptors for a given image keypoints combination
+		int buildVocabulary();										// build the vocabulary
+		int trainSVM();												// train the SVMs
+		int testImage();											// testing an input image against SVMs
+		int initClassiers();										// load SVMs
 
 		void openCamera(int index);
 
