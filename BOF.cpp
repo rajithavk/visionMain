@@ -26,6 +26,10 @@ int main(int argc , char **argv){
 //		cout << "Success";
 	vision* dev = new vision();
 
+//	image = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+//	cout << keypoints.size() << endl;
+//	keypoints = dev->getKeyPoints(image);
+//	cout << keypoints.size();
 	while(1){
 		cin >> input;
 		if(input == '1'){
@@ -40,7 +44,7 @@ int main(int argc , char **argv){
 					if(input=='q'){
 						break;
 					}else
-						if(input=='t')
+						if(input=='4')
 							dev->initClassifiers();
 	}
 

@@ -9,12 +9,14 @@
 
 vision::vision(){
 	create_directories("./classifiers");
-
-	bowTrainer = (new BOWKMeansTrainer(1000));
+	bowTrainer = (new BOWKMeansTrainer(CLUSTERS));
 	descriptorMatcher = (new BruteForceMatcher<L2<float> >);
 	//Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
-	descriptorExtractor = (new SiftDescriptorExtractor);
-
+	SIFT sf;
+	sf.set("edgeThreshold",edgeThreshold);
+	featureDetector = (new SiftFeatureDetector(sf));
+	descriptorExtractor = (new SiftDescriptorExtractor(sf));
+	//cout << featureDetector->getDouble("edgeThreshold");
 	bowDescriptorExtractor = (new BOWImgDescriptorExtractor(descriptorExtractor,descriptorMatcher));
 
 };
@@ -74,7 +76,7 @@ int vision::trainSVM(){
 	if(initVocabulary()!=0) return -1;
 
 	if(keypoints_vector.size()==0){
-		cout << "Making Keypoints";
+		cout << "Making Keypoints"<<endl;
 		for(multimap<string,Mat>::iterator it = training_set.begin();it!=training_set.end();it++){
 
 						Mat input = (*it).second;
@@ -102,6 +104,10 @@ int vision::trainSVM(){
 
 		classes_training_data[_class].push_back(hist);
 		itr++;
+
+
+		//cout << classes_training_data[_class].rows << endl;
+		//cout << hist.cols << hist.type() << endl;
 	}
 
 	//CvSVMParams svmparams;
@@ -111,8 +117,10 @@ int vision::trainSVM(){
 
 
 
-	for(map<string,Mat>::iterator it = classes_training_data.begin();it != classes_training_data.end();it++){
-		string class_ = (*it).first;
+	//sfor(map<string,Mat>::iterator it = classes_training_data.begin();it != classes_training_data.end();it++){
+	for(vector<string>::iterator it = classes.begin();it!=classes.end();it++){
+		//string class_ = (*it).first;
+		string class_ = (*it);
 		cout << "training.class : " << class_ << " .. " << endl;
 
 		Mat samples(0,hist.cols,hist.type());
@@ -123,19 +131,25 @@ int vision::trainSVM(){
 		labels.push_back(class_label);
 
 
-		for(map<string,Mat>::iterator it1 = classes_training_data.begin();it1!=classes_training_data.end();++it1){
-			string not_class = (*it1).first;
+		//for(map<string,Mat>::iterator it1 = classes_training_data.begin();it1!=classes_training_data.end();++it1){
+		for(vector<string>::iterator it1=classes.begin();it1!=classes.end();it1++){
+			//string not_class = (*it1).first;
+			string not_class = (*it1);
 			if(not_class.compare(class_) == 0) continue;
 			samples.push_back(classes_training_data[not_class]);
 			class_label = Mat::zeros(classes_training_data[not_class].rows,1,CV_32FC1);
 			labels.push_back(class_label);
+			cout << samples.rows << " " << labels.rows<< endl;
 		}
+
 		//cout << "going to train" << endl;
-		Mat samples_32f; samples.convertTo(samples_32f,CV_32F);
+		Mat samples_32f;
+		samples.convertTo(samples_32f,CV_32F);
+
 		//classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
 		classes_classifiers[class_].train(samples_32f,labels);
 		classes_classifiers[class_].save(String("./classifiers/"+ class_+ ".yml").c_str());
-		cout << classes_classifiers.count(class_) << endl;
+		//cout << classes_classifiers.count(class_) << endl;
 	}
 
 	Mat testimage;
@@ -176,14 +190,14 @@ int vision::testImage(){
 
 Mat vision::getDescriptors(Mat image,vector<KeyPoint> keypoints){
 	Mat descriptors;																	// descriptors of the current image
-	descriptorExtractor = (new SiftDescriptorExtractor());										// feature extractor
+	//descriptorExtractor = (new SiftDescriptorExtractor(0,5,0.4,10,1.6));
 	descriptorExtractor->compute(image,keypoints,descriptors);							// extract
 	return descriptors;																	// return the descriptors for the input image
 }
 
 vector<KeyPoint> vision::getKeyPoints(Mat image){
 	vector<KeyPoint> keypoints;															// SIFT keypoints of the current image
-	featureDetector = (new SiftFeatureDetector);												// feature Detector
+	//featureDetector = (new SiftFeatureDetector());												// feature Detector
 	featureDetector->detect(image,keypoints);
 	return keypoints;
 }

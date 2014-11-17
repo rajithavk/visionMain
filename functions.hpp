@@ -43,7 +43,6 @@ private :
 		Ptr<BOWImgDescriptorExtractor> bowDescriptorExtractor;
 		Ptr<DescriptorMatcher> descriptorMatcher;
 
-
 		Mat vocabulary;
 		multimap<string,Mat> training_set;
 		map<string,CvSVM> classes_classifiers;
@@ -52,12 +51,14 @@ private :
 		int num_of_classes;
 		int num_of_samples;
 
+		double edgeThreshold = 10;
+
 		const String TRAINING_DATA_FILE = "training_data.dat";
 		const String KEYPOINTS_FILE = "keypoints.yml";
 		const String TRAINING_DESCRIPTORS_FILE = "training_descriptors.yml";
 		const String VOCABULARY_FILE = "vocabulary.yml";
 		const String TRAINING_FOLDER = "images";
-		const int CLUSTERS = 1000;
+		const int CLUSTERS = 2000;
 
 public:
 		int loadTrainingSet();										// Load training images set into memory
