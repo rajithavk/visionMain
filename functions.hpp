@@ -70,10 +70,10 @@ public:
 		Mat getDescriptors(Mat image,vector<KeyPoint> keypoints);	// Get image descriptors for a given image keypoints combination
 		int buildVocabulary();										// build the vocabulary
 		int trainSVM();												// train the SVMs
-		int testImage();											// testing an input image against SVMs
+		int testImage(Mat testimage);											// testing an input image against SVMs
 		int initClassifiers();										// load SVMs
 
-		void openCamera(int index);
+		void openCamera(VideoCapture cap);
 
 		vision();
 		~vision();

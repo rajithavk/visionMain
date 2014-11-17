@@ -24,6 +24,12 @@ vision::~vision(){};
 
 
 
+
+//=================================================================================================
+// 								Build the Visual Vocabulary
+//=================================================================================================
+
+
 int vision::buildVocabulary(){
 	Mat input , descriptor, features_unclustered;
 	vector<KeyPoint> keypoints;
@@ -38,14 +44,6 @@ int vision::buildVocabulary(){
 				//cout << imagefile->d_name << " ";
 
 		}
-	//==================== Saving All the Keypoints ==========================
-	//FileStorage fs2(KEYPOINTS_FILE.c_str(),FileStorage::WRITE);
-	//for(size_t i =1;i!=keypoints_vector.size();++i){
-	//	cout << String("KP" + i) << endl;
-	//	fs2 << String("KP" + i) << keypoints_vector[i+1];
-	//}
-	//fs2.release();
-	//========================================================================
 
 	cout << "Total Descriptors : " << features_unclustered.rows << endl;
 	FileStorage fs(TRAINING_DESCRIPTORS_FILE.c_str(),FileStorage::WRITE);
@@ -69,6 +67,11 @@ int vision::buildVocabulary(){
 
 
 
+
+
+//=================================================================================================
+// 								Train the SVMs
+//=================================================================================================
 
 int vision::trainSVM(){
 	Mat hist, image;									//vocabulary -> moved to private global
@@ -124,10 +127,10 @@ int vision::trainSVM(){
 		cout << "training.class : " << class_ << " .. " << endl;
 
 		Mat samples(0,hist.cols,hist.type());
-		Mat labels(0,1,CV_32FC1);
+		Mat labels(0,1,CV_32S);
 		samples.push_back(classes_training_data[class_]);
 
-		Mat class_label = Mat::ones(classes_training_data[class_].rows,1,CV_32FC1);
+		Mat class_label = Mat::ones(classes_training_data[class_].rows,1,CV_32S);
 		labels.push_back(class_label);
 
 
@@ -137,17 +140,18 @@ int vision::trainSVM(){
 			string not_class = (*it1);
 			if(not_class.compare(class_) == 0) continue;
 			samples.push_back(classes_training_data[not_class]);
-			class_label = Mat::zeros(classes_training_data[not_class].rows,1,CV_32FC1);
+			class_label = Mat::ones(classes_training_data[not_class].rows,1,CV_32S);
+			class_label *= -1;
 			labels.push_back(class_label);
-			cout << samples.rows << " " << labels.rows<< endl;
+			//cout << samples.rows << " " << labels.rows<< endl;
 		}
 
 		//cout << "going to train" << endl;
-		Mat samples_32f;
-		samples.convertTo(samples_32f,CV_32F);
+		//Mat samples_32f;
+		//.convertTo(samples_32f,CV_32F);
 
 		//classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
-		classes_classifiers[class_].train(samples_32f,labels);
+		classes_classifiers[class_].train(samples,labels);
 		classes_classifiers[class_].save(String("./classifiers/"+ class_+ ".yml").c_str());
 		//cout << classes_classifiers.count(class_) << endl;
 	}
@@ -165,11 +169,17 @@ int vision::trainSVM(){
 	return 0;
 }
 
-int vision::testImage(){
-	Mat testimage,hist;
+
+
+//=================================================================================================
+// 								Predict for a Image
+//=================================================================================================
+
+int vision::testImage(Mat testimage){
+	Mat hist;
 
 	if(initVocabulary()!=0) return -1;
-
+	bowDescriptorExtractor->setVocabulary(vocabulary);
 
 	testimage = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
 	vector<KeyPoint> keypoints;
@@ -186,7 +196,9 @@ int vision::testImage(){
 
 
 
-
+//=================================================================================================
+// 								Helpers
+//=================================================================================================
 
 Mat vision::getDescriptors(Mat image,vector<KeyPoint> keypoints){
 	Mat descriptors;																	// descriptors of the current image
@@ -236,6 +248,10 @@ int vision::initVocabulary(String filename){
 }
 
 
+
+//=================================================================================================
+// 								Load Training Image Set
+//=================================================================================================
 int vision::loadTrainingSet(){
 	num_of_samples = 0;
 	string class_;
@@ -268,23 +284,57 @@ int vision::loadTrainingSet(){
 	return 0;
 }
 
-void vision::openCamera(int index=0){	// index - video device - 0,1,2... == video0, video1
-	Mat frame;
-	char key;
-	namedWindow("Camera");
-	VideoCapture capture(index);
-	if(capture.isOpened()){
-		while(true){
-			capture >> frame;
-			imshow("Output",frame);
-			key = waitKey(10);
-			if(char(key) == 27)
-				break;
-		}
+void vision::openCamera(VideoCapture cap){	// index - video device - 0,1,2... == video0, video1
+
+		SIFT sf;
+		sf.set("edgeThreshold",edgeThreshold);
+		featureDetector = (new SiftFeatureDetector(sf));
+		descriptorExtractor = (new SiftDescriptorExtractor(sf));
+		//cout << featureDetector->getDouble("edgeThreshold");
+		bowDescriptorExtractor = (new BOWImgDescriptorExtractor(descriptorExtractor,descriptorMatcher));
+	cout << "Camera Starting" << endl;
+	namedWindow("cap");
+	if(initVocabulary()!=0) return ;
+
+	while(char(waitKey(1)) != 'q') {
+		float dec = 1000;
+		string class_;
+
+		Mat frame, frame_g;
+		cap >> frame;
+		imshow("Image", frame);
+
+		cvtColor(frame, frame_g, CV_BGR2GRAY);
+
+		vector <KeyPoint> keypoints;
+		Mat hist;
+	    keypoints = getKeyPoints(frame_g);
+
+	    bowDescriptorExtractor->setVocabulary(vocabulary);
+	    bowDescriptorExtractor->compute(frame_g,keypoints,hist);
+	    cout << hist.cols<<endl;
+
+	    for(map<string,CvSVM>::iterator it=classes_classifiers.begin();it!=classes_classifiers.end();++it){
+	    	float res = (*it).second.predict(hist,true);
+	    		cout << "class: " << (*it).first << " --> " << res << endl;
+	    		if(res<dec){
+	    			dec = res;
+	    			class_ = (*it).first;
+	    		}
+	    	}
+
+	    Mat im = (training_set.find(class_))->second;
+	    imshow("Detected",im);
 	}
-	destroyWindow("Camera");
+
+	destroyAllWindows();
 }
 
+
+
+//=================================================================================================
+// 								Load Prebuilt SVMs
+//=================================================================================================
 
 int vision::initClassifiers(){
 	String cpath = current_path().string() + "/classifiers/";

@@ -46,6 +46,16 @@ int main(int argc , char **argv){
 					}else
 						if(input=='4')
 							dev->initClassifiers();
+						else
+							if(input=='5'){
+								image = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+								dev->testImage(image);
+							}
+							else
+								if(input=='6'){
+									VideoCapture cap(1);
+									dev->openCamera(cap);
+								}
 	}
 
 //		dev->initVocabulary();
