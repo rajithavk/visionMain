@@ -20,7 +20,9 @@ vision::vision(){
 	bowDescriptorExtractor = (new BOWImgDescriptorExtractor(descriptorExtractor,descriptorMatcher));
 
 };
-vision::~vision(){};
+vision::~vision(){
+
+};
 
 
 
@@ -286,12 +288,13 @@ int vision::loadTrainingSet(){
 
 void vision::openCamera(VideoCapture cap){	// index - video device - 0,1,2... == video0, video1
 
-		SIFT sf;
-		sf.set("edgeThreshold",edgeThreshold);
-		featureDetector = (new SiftFeatureDetector(sf));
-		descriptorExtractor = (new SiftDescriptorExtractor(sf));
-		//cout << featureDetector->getDouble("edgeThreshold");
-		bowDescriptorExtractor = (new BOWImgDescriptorExtractor(descriptorExtractor,descriptorMatcher));
+	SIFT sf;
+	sf.set("edgeThreshold",edgeThreshold);
+	featureDetector = (new SiftFeatureDetector(sf));
+	descriptorExtractor = (new SiftDescriptorExtractor(sf));
+	//cout << featureDetector->getDouble("edgeThreshold");
+	bowDescriptorExtractor = (new BOWImgDescriptorExtractor(descriptorExtractor,descriptorMatcher));
+
 	cout << "Camera Starting" << endl;
 	namedWindow("cap");
 	if(initVocabulary()!=0) return ;
@@ -313,7 +316,7 @@ void vision::openCamera(VideoCapture cap){	// index - video device - 0,1,2... ==
 	    bowDescriptorExtractor->setVocabulary(vocabulary);
 	    bowDescriptorExtractor->compute(frame_g,keypoints,hist);
 	    cout << hist.cols<<endl;
-
+	    if(hist.cols==0) continue;
 	    for(map<string,CvSVM>::iterator it=classes_classifiers.begin();it!=classes_classifiers.end();++it){
 	    	float res = (*it).second.predict(hist,true);
 	    		cout << "class: " << (*it).first << " --> " << res << endl;
