@@ -18,7 +18,6 @@ vision::vision(){
 	descriptorExtractor = (new SiftDescriptorExtractor(sf));
 	//cout << featureDetector->getDouble("edgeThreshold");
 	bowDescriptorExtractor = (new BOWImgDescriptorExtractor(descriptorExtractor,descriptorMatcher));
-
 };
 vision::~vision(){
 
@@ -115,10 +114,17 @@ int vision::trainSVM(){
 		//cout << hist.cols << hist.type() << endl;
 	}
 
-	//CvSVMParams svmparams;
-	//svmparams.svm_type	=	CvSVM::C_SVC;
-	//svmparams.kernel_type	= CvSVM::RBF;
-	//svmparams.nu = 0.5;
+	CvSVMParams svmparams;
+	svmparams.svm_type	=	CvSVM::C_SVC;
+	svmparams.kernel_type	= CvSVM::LINEAR;
+	svmparams.degree = 0.0;
+	svmparams.gamma = 0.0;
+	svmparams.coef0 = 0.0;
+	svmparams.C  = 1000;
+	svmparams.nu = 0;
+	svmparams.p = 0;
+	svmparams.term_crit = cvTermCriteria(CV_TERMCRIT_ITER+CV_TERMCRIT_EPS,10000, 0.000001);
+	svmparams.class_weights = NULL;
 
 
 
@@ -142,8 +148,8 @@ int vision::trainSVM(){
 			string not_class = (*it1);
 			if(not_class.compare(class_) == 0) continue;
 			samples.push_back(classes_training_data[not_class]);
-			class_label = Mat::ones(classes_training_data[not_class].rows,1,CV_32S);
-			class_label *= -1;
+			class_label = Mat::zeros(classes_training_data[not_class].rows,1,CV_32S);
+			//class_label *= -1;
 			labels.push_back(class_label);
 			//cout << samples.rows << " " << labels.rows<< endl;
 		}
@@ -153,7 +159,8 @@ int vision::trainSVM(){
 		//.convertTo(samples_32f,CV_32F);
 
 		//classes_classifiers[class_].train(samples_32f,labels,Mat(),Mat(),svmparams);
-		classes_classifiers[class_].train(samples,labels);
+		//classes_classifiers[class_].train(samples,labels,Mat(),Mat(),svmparams);
+		classes_classifiers[class_].train_auto(samples,labels,Mat(),Mat(),svmparams,10);
 		classes_classifiers[class_].save(String("./classifiers/"+ class_+ ".yml").c_str());
 		//cout << classes_classifiers.count(class_) << endl;
 	}
@@ -352,4 +359,8 @@ int vision::initClassifiers(){
 	}
 
 	return 0;
+}
+
+int vision::testImages(){
+
 }

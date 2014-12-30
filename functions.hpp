@@ -72,6 +72,7 @@ public:
 		int trainSVM();												// train the SVMs
 		int testImage(Mat testimage);											// testing an input image against SVMs
 		int initClassifiers();										// load SVMs
+		int testImages();
 
 		void openCamera(VideoCapture cap);
 
