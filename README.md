@@ -12,10 +12,10 @@ Library for Object Classifier for FYP
 
 .
 +-- Default
-	+-- images
-		+-- object1
-		+-- object2
-		+-- ..
-		+-- ..
-	+-- ..
-+-- *project files* Eclipse
+|	+-- images
+|	|	+-- object1
+|	|	+-- object2
+|	|	+-- ..
+|	|	+-- ..
+|	+-- ..
++-- Eclipse Project Files
