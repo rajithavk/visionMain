@@ -10,18 +10,18 @@ Library for Object Classifier for FYP
 ./Default
 		Make
 
-.
-├── BOF.cpp
-├── Default
-│   ├── classifiers
-│   ├── images
-│   ├── makefile
-│   ├── objects.mk
-│   ├── sources.mk
-│   ├── subdir.mk
-│   ├── training_descriptors.yml
-│   ├── trainingsetinfo.yml
-│   └── vocabulary.yml
-├── functions.cpp
-├── functions.hpp
-└── README.md
+    -Default
+        -classifiers
+        -mages
+        -makefile
+        -objects.mk
+        -sources.mk
+        -subdir.mk
+        -training_descriptors.yml
+        -rainingsetinfo.yml
+        -vocabulary.yml
+    -functions.cpp
+    -functions.hpp
+    -BOF.cpp
+    -README.md
+
