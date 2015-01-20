@@ -2,9 +2,10 @@ visionMain
 ==========
 
 Library for Object Classifier for FYP
-	* Visual Vocabulary Creation
-	* SVM Train
-	* Prediction Against Input
+
+	*Visual Vocabulary Creation
+	*SVM Train
+	*Prediction Against Input
 
 ./Default
 		Make
