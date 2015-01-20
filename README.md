@@ -11,11 +11,17 @@ Library for Object Classifier for FYP
 		Make
 
 .
-+-- Default
-|	+-- images
-|	|	+-- object1
-|	|	+-- object2
-|	|	+-- ..
-|	|	+-- ..
-|	+-- ..
-+-- Eclipse Project Files
+├── BOF.cpp
+├── Default
+│   ├── classifiers
+│   ├── images
+│   ├── makefile
+│   ├── objects.mk
+│   ├── sources.mk
+│   ├── subdir.mk
+│   ├── training_descriptors.yml
+│   ├── trainingsetinfo.yml
+│   └── vocabulary.yml
+├── functions.cpp
+├── functions.hpp
+└── README.md
