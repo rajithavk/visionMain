@@ -12,8 +12,8 @@ Library for Object Classifier for FYP
 
 
 /images
-	../Object1
-	..
-	..
-	../Object2
+	*../Object1
+	*..
+	*..
+	*../Object2
 
