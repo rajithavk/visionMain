@@ -10,10 +10,12 @@ Library for Object Classifier for FYP
 ./Default
 		Make
 
-
-/images
-	*../Object1
-	*..
-	*..
-	*../Object2
-
+.
++-- Default
+	+-- images
+		+-- object1
+		+-- object2
+		+-- ..
+		+-- ..
+	+-- ..
++-- *project files* Eclipse
