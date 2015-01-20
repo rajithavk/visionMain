@@ -10,7 +10,7 @@
 Mat image;
 vector<KeyPoint> keypoints;
 Mat descriptors;
-
+char input;
 
 int main(int argc , char **argv){
 //	cout << argv[1] << endl;
@@ -26,14 +26,49 @@ int main(int argc , char **argv){
 //		cout << "Success";
 	vision* dev = new vision();
 
-	if(*argv[1] == '1'){
-		if(dev->buildVocabulary("images")==0)
-		cout << "Success Vocabulary";
-
+//	image = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+//	cout << keypoints.size() << endl;
+//	keypoints = dev->getKeyPoints(image);
+//	cout << keypoints.size();
+	while(1){
+		cin >> input;
+		if(input == '1'){
+			dev->loadTrainingSet();
+		}else
+			if(input == '2'){
+				dev->buildVocabulary();
+			}else
+				if(input=='3'){
+					dev->trainSVM();
+				}else
+					if(input=='q'){
+						break;
+					}else
+						if(input=='4')
+							dev->initClassifiers();
+						else
+							if(input=='5'){
+								image = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+								dev->testImage(image);
+							}
+							else
+								if(input=='6'){
+									VideoCapture cap(1);
+									dev->openCamera(cap);
+								}
 	}
-	else
-		if(dev->trainSVM()==0){
-			cout << "Success SVM";
-		}
+
+//		dev->initVocabulary();
+//		dev->trainSVM();
+
+//	if(*argv[1] == '1'){
+//		if(dev->buildVocabulary("images")==0)
+//		cout << "Success Vocabulary";
+//
+//	}
+//	else
+//		if(dev->trainSVM()==0){
+//			cout << "Success SVM";
+//		}
 	return 0;
 }
