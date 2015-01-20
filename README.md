@@ -1,25 +1,18 @@
 visionMain
 ==========
 
-Functions and modules related to vision
+Library for Object Classifier for FYP
+	* Visual Vocabulary Creation
+	* SVM Train
+	* Prediction Against Input
 
 ./Default
-		|------> ./make 	-	Build Project
-
-		|------> ./make clean	-	Clean Builds
+		Make
 
 
-Directory Structure
-===================
-
-images/
-		class1/*.jpg
-
-		class2/*.jpg
-
-		.
-		.
-		.
-
-		classn/*.jpg
+/images
+	../Object1
+	..
+	..
+	../Object2
 

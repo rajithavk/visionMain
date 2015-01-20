@@ -186,11 +186,11 @@ int vision::trainSVM(){
 
 int vision::testImage(Mat testimage){
 	Mat hist;
-
+	Vector<pair<string,float>> result;
 	if(initVocabulary()!=0) return -1;
 	bowDescriptorExtractor->setVocabulary(vocabulary);
 
-	testimage = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+//	testimage = imread("test.jpg",CV_LOAD_IMAGE_GRAYSCALE);
 	vector<KeyPoint> keypoints;
 	keypoints = getKeyPoints(testimage);
 	bowDescriptorExtractor->compute(testimage,keypoints,hist);
@@ -198,6 +198,7 @@ int vision::testImage(Mat testimage){
 	//cout << hist.cols << endl;
 	for(map<string,CvSVM>::iterator it=classes_classifiers.begin();it!=classes_classifiers.end();++it){
 		float res = (*it).second.predict(hist,true);
+
 		cout << "class: " << (*it).first << " --> " << res << endl;
 	}
 	return 0;
